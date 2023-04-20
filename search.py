@@ -3,7 +3,7 @@ import json
 
 start = 0
 goal = 100
-avoid = [11]
+avoid = []
 
 with open("levels.json", "r") as f:
     levels = json.load(f)
@@ -24,77 +24,44 @@ assert(goal in nodes)
 
 nodes = nodes - set(avoid)
 
+remove = set()
+for v1,v2 in edges:
+    if v1 in avoid or v2 in avoid:
+        remove.add((v1,v2))
+        
+edges = edges - remove
+
+
 connections = {}
+for v in nodes:
+    if v not in connections:
+        connections[v] = []
+
 for v1,v2 in edges:
     if v1 not in nodes or v2 not in nodes:
       continue
-    if v1 not in connections:
-        connections[v1] = []
     connections[v1].append(v2)
 
-# find shortest path using dijkstra's algorithm
+path_count = 20
 
-# initialize distances
-distances = {}
-for node in nodes:
-    distances[node] = float('inf')
-distances[start] = 0
+import networkx as nx
+import shortestpaths as sp
 
-# initialize previous nodes
-previous = {}
-for node in nodes:
-    previous[node] = None
+# G = nx.Graph()
+G = nx.DiGraph()
+G.add_nodes_from(nodes)
+G.add_edges_from(edges)
+
+paths = sp.k_shortest_paths(G, start, goal, k=path_count)
+sp.print_paths(paths)
+# sp.plot_paths(paths, G)
+
+# print(paths)
     
-# initialize unvisited nodes
-unvisited = set(nodes)
-
-while len(unvisited) > 0:
-    # find node with smallest distance
-    smallest = None
-    for node in unvisited:
-        if smallest is None or distances[node] < distances[smallest]:
-            smallest = node
-    # if smallest is None:
-    #     print("Smallest is None")
-    #     print("Unvisited: %s" % unvisited)
-    #     print("Distances: %s" % distances)
-    #     print("Previous: %s" % previous)
-    #     print("Connections: %s" % connections)
-    #     break
-    # print("Smallest: %s" % smallest)
-    # print("Distances: %s" % distances)
-    # print("Previous: %s" % previous)
-    # print("Connections: %s" % connections)
-    unvisited.remove(smallest)
-    if smallest == goal:
-        break
-    if smallest not in connections:
-        continue
-    for neighbor in connections[smallest]:
-        # print("Neighbor: %s" % neighbor)
-        alt = distances[smallest] + 1
-        if alt < distances[neighbor]:
-            distances[neighbor] = alt
-            previous[neighbor] = smallest
-        
-# print("Distances: %s" % distances)
-# print("Previous: %s" % previous)
-
-# reconstruct path
-path = []
-node = goal
-while node is not None:
-    path.append(node)
-    node = previous[node]
-path.reverse()
-
-print("Path: %s" % path)
-
-    
-for level in levels:
-    if level["number"] in path:
-        print(level["title"])
-        print("Entrances: %s" % level["entrances"])
-        print("Exits: %s" % level["exits"])
-        # print(level["text"])
-        print()
+# for level in levels:
+#     if level["number"] in paths[0][0]:
+#         print(level["title"])
+#         print("Entrances: %s" % level["entrances"])
+#         print("Exits: %s" % level["exits"])
+#         # print(level["text"])
+#         print()
